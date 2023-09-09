@@ -1,0 +1,51 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+  db:
+    container_name: cloud_native_postgres
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=123456789
+      - POSTGRES_DB=product
+      - POSTGRES_SCHEMA=publish
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: cloud_native_pgadmin4
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@local.com
+      - PGADMIN_DEFAULT_PASSWORD=123456789
+      - PGADMIN_LISTEN_PORT=80
+    ports:
+      - "9090:80"
+    depends_on:
+      - db
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+
+  product-service:
+    container_name: product-service
+    build:
+      context: ./
+      dockerfile: ./docker/java/.Dockerfile
+      args:
+        SERVICE: product
+    image: product-service:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  db:
+  pgadmin:
